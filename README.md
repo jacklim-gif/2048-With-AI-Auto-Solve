@@ -8,7 +8,7 @@ It turns a simple puzzle into a fascinating showcase of AI—wrapped in a sleek 
 
 ## 👥 Contributors
 
-* **Jack** – Core AI Logic & Algorithm Implementation
+* **[Jack](https://github.com/jacklim-gif)** – Core AI Logic & Algorithm Implementation
 * **Open Source** – *[Your Name/Handle Here]* (Feel free to contribute!)
 
 ## Features
