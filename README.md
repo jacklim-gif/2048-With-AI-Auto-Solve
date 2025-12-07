@@ -28,10 +28,6 @@ It turns a simple puzzle into a fascinating showcase of AI—wrapped in a sleek 
 * **Expectimax Algorithm (Game Theory)**
 * **Heuristic Evaluation Functions**
 
-## Live Demo
-
-[https://jacklim-gif.github.io/2048-With-AI-Auto-Solve/](https://jacklim-gif.github.io/2048-With-AI-Auto-Solve/)
-
 ## How to Run Locally (super easy)
 
 ```bash
