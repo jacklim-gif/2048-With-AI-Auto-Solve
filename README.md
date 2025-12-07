@@ -1,73 +1,83 @@
-2048 AI Auto-Solver 🤖🧩
+🎮 2048 AI Auto-Solver 🤖🧩
 
-A high-performance implementation of the classic 2048 game featuring an intelligent Auto-Solve AI.
-The AI uses the Expectimax Algorithm with heuristic optimizations to consistently reach 2048 and beyond.
+A smart 2048 game clone powered by an intelligent Auto-Solve bot.
 
-🎮 Live Demo
+<div align="center">
+🚀 Built with Vanilla JavaScript • 🧠 Expectimax AI • 🎨 Smooth UI
+<br>
 
-(Optional: Replace with your GitHub Pages link)
+
+(You can replace this banner with your own image)
+
+</div>
+⭐ Features
+
+⚡ Auto-Solver — Watch the AI complete the game for you
+
+🧠 Expectimax Algorithm — Not random, but real decision-making
+
+🐍 Snake-Pattern Heuristic for smarter tile organization
+
+🎨 Glass UI + Clean Animations
+
+⏩ Fast-Win Demo Mode
+
+📱 Responsive Design
+
+🛠️ Pure HTML + CSS + JS (no frameworks)
+
+🧠 How the AI Thinks
+🔹 1. Expectimax Algorithm
+
+Because new tiles spawn randomly, the AI evaluates:
+
+Max Nodes → Best move the player can make
+
+Chance Nodes → Random spawn:
+
+90% = 2
+
+10% = 4
+
+This gives the AI the ability to “see the future” more accurately.
+
+🔹 2. Heuristic Scoring
+
+The AI grades each board using three main rules:
+
+Heuristic	Meaning
+Monotonicity	Keeps tiles in a snake-like pattern
+Smoothness	Penalizes large jumps between tiles
+Empty Cells	Rewards open spaces for survival
+🔹 3. Survival Mode
+
+If the board becomes dangerous:
+
+Normal depth: 4
+
+Danger mode depth: 6
+
+This helps the AI escape losing positions.
+
+📂 Live Demo
+
+(Replace with your GitHub Pages link)
 👉 Play the Game
 
-🧠 How the AI Works
-
-This AI strategically analyzes future moves instead of picking random directions.
-
-1. Expectimax Algorithm
-
-2048 has randomness (new tiles spawn unpredictably), so the AI uses Expectimax, not Minimax.
-
-Max Nodes (Player): Chooses the best move.
-Chance Nodes (Environment): Calculates random tile spawns:
-
-90% → 2
-
-10% → 4
-
-2. Heuristic Evaluation ("Snake Strategy")
-
-The AI scores the board using:
-
-Monotonicity — Encourages a snake-like pattern with the largest tile in a corner
-
-Smoothness — Penalizes large jumps between adjacent tiles
-
-Empty Cells — Rewards having space to survive longer
-
-3. Dynamic Survival Mode
-Game State	AI Depth
-Normal board	4 moves deep
-Critical state (less than 4 empty tiles)	6 moves deep
-
-This helps the AI escape near-loss situations.
-
-✨ Features
-
-⚡ Auto-Solver (plays for you)
-
-🎨 Polished UI with animations
-
-⏩ Fast-Win Mode
-
-🧠 Reaches 2048 / 4096 commonly
-
-📱 Responsive for mobile
-
-🛠️ No frameworks — pure HTML/CSS/JS
-
-🚀 Getting Started
-1. Clone the Repository
+🛠️ Setup
+Clone the Repo
 git clone https://github.com/jacklim-gif/2048-With-AI-Auto-Solve.git
 
-2. Run the Game
+Run it
 
-Just open game.html in any browser.
+Just double-click:
 
-No installation needed.
+game.html
 
-🛠️ Configuration
 
-You can tweak the AI in the CONFIG object:
+No build. No dependencies.
 
+⚙️ Configure the AI
 const CONFIG = {
     size: 4,
     aiDelay: 150,
@@ -76,29 +86,21 @@ const CONFIG = {
 };
 
 🤝 Contributing
+Fork → Branch → Commit → Push → PR
 
-Fork the repo
+📜 License
 
-Create a branch
+MIT License — Free to use & modify.
 
-git checkout -b feature/MyFeature
+<div align="center">
+💙 Built with passion by Jack Lim
 
+If you want, I can also design:
+✔ A custom banner
+✔ Preview GIF
+✔ Better layout with icons
+✔ Color theme for the README
 
-Commit changes
+Just say the word.
 
-git commit -m "Add feature"
-
-
-Push the branch
-
-git push origin feature/MyFeature
-
-
-Open a Pull Request
-
-📝 License
-
-Distributed under the MIT License.
-See the LICENSE file for details.
-
-Built with ❤️ by Jack Lim
+</div>
