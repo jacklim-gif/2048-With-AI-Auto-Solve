@@ -1,94 +1,104 @@
 2048 AI Auto-Solver 🤖🧩
 
-A high-performance implementation of the classic 2048 game featuring an intelligent Auto-Solve bot. The AI uses the Expectimax Algorithm with heuristic optimizations to consistently reach the 2048 tile and beyond.
+A high-performance implementation of the classic 2048 game featuring an intelligent Auto-Solve AI.
+The AI uses the Expectimax Algorithm with heuristic optimizations to consistently reach 2048 and beyond.
 
 🎮 Live Demo
 
-(Optional: If you have GitHub Pages enabled, replace this link with your actual URL)
-Play the Game
+(Optional: Replace with your GitHub Pages link)
+👉 Play the Game
 
 🧠 How the AI Works
 
-This isn't just a random move generator. The AI "thinks" about future board states using advanced game theory concepts.
+This AI strategically analyzes future moves instead of picking random directions.
 
 1. Expectimax Algorithm
 
-Unlike Chess (which uses Minimax), 2048 is a game of chance because new tiles spawn randomly. I implemented Expectimax to handle this stochastic nature:
+2048 has randomness (new tiles spawn unpredictably), so the AI uses Expectimax, not Minimax.
 
-Max Nodes (Player): The AI evaluates the best move (Up, Down, Left, Right).
+Max Nodes (Player): Chooses the best move.
+Chance Nodes (Environment): Calculates random tile spawns:
 
-Chance Nodes (Environment): The AI calculates the average outcome of all possible random tile spawns (90% chance of '2', 10% chance of '4').
+90% → 2
 
-2. Heuristic Evaluation (The "Snake" Strategy)
+10% → 4
 
-The AI evaluates board states based on specific criteria to keep the grid organized:
+2. Heuristic Evaluation ("Snake Strategy")
 
-Monotonicity: Forces the values to increase in a snake-like pattern (e.g., largest tile in the bottom-right corner).
+The AI scores the board using:
 
-Smoothness: Penalizes adjacent tiles that have drastically different values to ensure they can merge easily.
+Monotonicity — Encourages a snake-like pattern with the largest tile in a corner
 
-Empty Cells: Rewards keeping the board open to prevent "Game Over" scenarios.
+Smoothness — Penalizes large jumps between adjacent tiles
 
-3. Dynamic "Survival Mode"
+Empty Cells — Rewards having space to survive longer
 
-To balance performance and intelligence:
+3. Dynamic Survival Mode
+Game State	AI Depth
+Normal board	4 moves deep
+Critical state (less than 4 empty tiles)	6 moves deep
 
-Standard Play: The AI searches 4 moves deep.
-
-Survival Mode: If the board becomes critical (less than 4 empty cells), the AI automatically deepens its search to 6 moves to find a precise escape route.
+This helps the AI escape near-loss situations.
 
 ✨ Features
 
-⚡ Auto-Solve: Watch the AI play in real-time.
+⚡ Auto-Solver (plays for you)
 
-🎨 Smooth UI: Glassmorphism design with CSS animations for sliding and merging.
+🎨 Polished UI with animations
 
-⏩ Demo Mode: Optional "Fast Win" mode that spawns larger numbers (great for testing/recording).
+⏩ Fast-Win Mode
 
-🏆 Intelligent: Capable of reaching the 2048 tile (and often 4096) autonomously.
+🧠 Reaches 2048 / 4096 commonly
 
-📱 Responsive: Works on Desktop and Mobile.
+📱 Responsive for mobile
+
+🛠️ No frameworks — pure HTML/CSS/JS
 
 🚀 Getting Started
+1. Clone the Repository
+git clone https://github.com/jacklim-gif/2048-With-AI-Auto-Solve.git
 
-No installation or build steps are required. This project is built with vanilla web technologies.
+2. Run the Game
 
-Clone the repository
+Just open game.html in any browser.
 
-git clone [https://github.com/jacklim-gif/2048-With-AI-Auto-Solve.git](https://github.com/jacklim-gif/2048-With-AI-Auto-Solve.git)
-
-
-Open the Game
-Simply open the game.html file in any modern web browser (Chrome, Edge, Firefox).
+No installation needed.
 
 🛠️ Configuration
 
-You can tweak the AI's behavior by modifying the CONFIG object in the source code:
+You can tweak the AI in the CONFIG object:
 
 const CONFIG = {
-    size: 4,           // Grid size
-    aiDelay: 150,      // Speed of AI moves (ms)
-    aiDepth: 4,        // Standard lookahead depth
-    survivalDepth: 6   // Lookahead depth when in danger
+    size: 4,
+    aiDelay: 150,
+    aiDepth: 4,
+    survivalDepth: 6
 };
-
 
 🤝 Contributing
 
-Contributions are welcome! If you have ideas for better heuristics or optimization:
+Fork the repo
 
-Fork the Project
+Create a branch
 
-Create your Feature Branch (git checkout -b feature/AmazingFeature)
+git checkout -b feature/MyFeature
 
-Commit your Changes (git commit -m 'Add some AmazingFeature')
 
-Push to the Branch (git push origin feature/AmazingFeature)
+Commit changes
+
+git commit -m "Add feature"
+
+
+Push the branch
+
+git push origin feature/MyFeature
+
 
 Open a Pull Request
 
 📝 License
 
-Distributed under the MIT License. See LICENSE for more information.
+Distributed under the MIT License.
+See the LICENSE file for details.
 
 Built with ❤️ by Jack Lim
