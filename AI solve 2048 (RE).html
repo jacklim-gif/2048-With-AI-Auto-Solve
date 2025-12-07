@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>2048 AI - Smooth Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #faf8ef;
+            --bg-game: #bbada0;
+            --bg-tile-empty: #cdc1b4;
+            --text-primary: #776e65;
+            --text-light: #f9f6f2;
+            --tile-size: 100px;
+            --grid-gap: 15px;
+            --radius: 6px;
+            --speed: 150ms;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-body);
+            font-family: 'Nunito', sans-serif;
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        .header-container {
+            width: 475px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .title-section h1 { font-size: 60px; font-weight: 800; margin: 0; line-height: 1; color: #776e65; }
+        .title-section p { margin: 5px 0 0; font-size: 16px; opacity: 0.8; }
+
+        .score-board { display: flex; gap: 8px; }
+        .score-card {
+            background: var(--bg-game);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-align: center;
+            min-width: 80px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .score-label { font-size: 11px; text-transform: uppercase; font-weight: 700; color: #eee4da; letter-spacing: 1px; }
+        .score-value { font-size: 20px; font-weight: 800; }
+
+        /* --- Controls --- */
+        .controls-container {
+            width: 475px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            gap: 15px;
+        }
+
+        .btn {
+            border: none; outline: none; padding: 12px 24px; border-radius: 50px;
+            font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: 'Nunito', sans-serif; flex: 1;
+        }
+        .btn:active { transform: translateY(2px); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-new { background-color: #8f7a66; color: white; }
+        .btn-new:hover { background-color: #7f6a56; }
+        .btn-ai { background-color: #8e44ad; color: white; position: relative; overflow: hidden; }
+        .btn-ai.active { background-color: #9b59b6; box-shadow: 0 0 15px rgba(142, 68, 173, 0.4); }
+        .btn-ai.active::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 100% { left: 150%; } }
+
+        /* --- Game Board --- */
+        .game-wrapper {
+            position: relative;
+            background: var(--bg-game);
+            padding: var(--grid-gap);
+            border-radius: var(--radius);
+            width: 475px; height: 475px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        .grid-background {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: var(--grid-gap);
+            width: 100%; height: 100%;
+        }
+
+        .grid-cell { background: var(--bg-tile-empty); border-radius: 3px; }
+        .tile-container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: var(--grid-gap); }
+
+        .tile {
+            position: absolute; width: var(--tile-size); height: var(--tile-size);
+            border-radius: 3px; display: flex; justify-content: center; align-items: center;
+            font-weight: 800; font-size: 45px; transition: transform var(--speed) ease-in-out;
+            z-index: 10; will-change: transform;
+        }
+
+        .tile-inner {
+            width: 100%; height: 100%; border-radius: 3px; display: flex;
+            justify-content: center; align-items: center;
+            animation: popIn 200ms ease-out backwards;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+        }
+
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
+        @keyframes popMerge { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        .merged .tile-inner { animation: popMerge 200ms ease-in-out; z-index: 20; }
+
+        /* Colors */
+        .val-2 { background: #eee4da; color: #776e65; }
+        .val-4 { background: #ede0c8; color: #776e65; }
+        .val-8 { background: #f2b179; color: #f9f6f2; }
+        .val-16 { background: #f59563; color: #f9f6f2; }
+        .val-32 { background: #f67c5f; color: #f9f6f2; }
+        .val-64 { background: #f65e3b; color: #f9f6f2; }
+        .val-128 { background: #edcf72; color: #f9f6f2; font-size: 38px; box-shadow: 0 0 10px rgba(237, 207, 114, 0.4); }
+        .val-256 { background: #edcc61; color: #f9f6f2; font-size: 38px; box-shadow: 0 0 10px rgba(237, 207, 114, 0.5); }
+        .val-512 { background: #edc850; color: #f9f6f2; font-size: 38px; box-shadow: 0 0 15px rgba(237, 207, 114, 0.6); }
+        .val-1024 { background: #edc53f; color: #f9f6f2; font-size: 30px; box-shadow: 0 0 20px rgba(237, 207, 114, 0.7); }
+        .val-2048 { background: #edc22e; color: #f9f6f2; font-size: 30px; box-shadow: 0 0 25px rgba(237, 207, 114, 0.8); }
+        .val-super { background: #3c3a32; color: #f9f6f2; font-size: 24px; }
+
+        /* Overlays */
+        .overlay {
+            position: absolute; inset: 0;
+            background: rgba(250, 248, 239, 0.85); backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            border-radius: var(--radius); z-index: 100;
+        }
+        .overlay.show { opacity: 1; pointer-events: all; }
+        .overlay h2 { font-size: 50px; font-weight: 800; margin: 0 0 10px 0; color: #776e65; }
+        .overlay p { font-size: 18px; color: #776e65; margin: 0 0 25px 0; opacity: 0.8; }
+        .overlay-btns { display: flex; gap: 10px; }
+        .btn-overlay { padding: 10px 20px; font-size: 16px; min-width: 120px; }
+        
+        .win-text { color: #edc22e !important; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* Footer */
+        .footer {
+            margin-top: 20px; font-size: 14px; color: #776e65;
+            display: flex; gap: 15px; align-items: center; width: 475px; justify-content: space-between;
+        }
+        .badge { display: flex; align-items: center; gap: 5px; font-weight: 700; opacity: 0.7; }
+        
+        /* Demo Mode Toggle */
+        .demo-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+        .demo-checkbox { width: 16px; height: 16px; accent-color: #8e44ad; cursor: pointer; }
+
+        /* Mobile */
+        @media (max-width: 500px) {
+            .header-container, .controls-container, .game-wrapper, .footer { width: 340px; }
+            .game-wrapper { height: 340px; }
+            :root { --tile-size: 70px; --grid-gap: 10px; }
+            .title-section h1 { font-size: 40px; }
+            .tile { font-size: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="title-section">
+            <h1>2048</h1>
+            <p>AI Solver Edition</p>
+        </div>
+        <div class="score-board">
+            <div class="score-card">
+                <div class="score-label">SCORE</div>
+                <div class="score-value" id="score-display">0</div>
+            </div>
+            <div class="score-card">
+                <div class="score-label">BEST</div>
+                <div class="score-value" id="best-display">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-container">
+        <button class="btn btn-new" onclick="game.restart()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            New Game
+        </button>
+        <button class="btn btn-ai" id="ai-trigger" onclick="ai.toggle()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span id="ai-text">Auto-Solve</span>
+        </button>
+    </div>
+
+    <div class="game-wrapper">
+        <div class="grid-background">
+            <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+        </div>
+        
+        <div class="tile-container" id="tile-layer"></div>
+
+        <!-- WIN OVERLAY -->
+        <div class="overlay" id="game-won">
+            <h2 class="win-text">You Win!</h2>
+            <p>2048 tile reached!</p>
+            <div class="overlay-btns">
+                <button class="btn btn-new btn-overlay" onclick="game.continueGame()">Continue</button>
+                <button class="btn btn-new btn-overlay" onclick="game.restart()">Try Again</button>
+            </div>
+        </div>
+
+        <!-- GAME OVER OVERLAY -->
+        <div class="overlay" id="game-over">
+            <h2>Game Over!</h2>
+            <div class="overlay-btns">
+                <button class="btn btn-new btn-overlay" onclick="game.restart()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 12a10 10 0 0 1 10-10"/></svg>
+            <span id="move-display">Moves: 0</span>
+        </div>
+        
+        <label class="demo-toggle" title="Spawns larger numbers to reach 2048 faster (for demos)">
+            <input type="checkbox" class="demo-checkbox" id="demo-mode" onchange="game.toggleDemo()">
+            <span style="font-weight:700; font-size:14px;">Demo Mode (Fast Win)</span>
+        </label>
+    </div>
+
+<script>
+/** 2048 ENGINE WITH DEMO MODE & WIN POPUP */
+
+const CONFIG = {
+    size: 4,
+    aiDelay: 150,
+    aiDepth: 4,
+    survivalDepth: 6
+};
+
+let globalId = 1;
+class Tile {
+    constructor(r, c, value) {
+        this.r = r; this.c = c; this.value = value;
+        this.id = globalId++; this.mergedFrom = null; 
+    }
+    savePosition() { this.previousPosition = { r: this.r, c: this.c }; }
+    updatePosition(r, c) { this.r = r; this.c = c; }
+}
+
+const game = {
+    grid: [], score: 0, moves: 0, best: 0, over: false, won: false, demoMode: false,
+    
+    init() {
+        this.grid = Array(CONFIG.size).fill(null).map(() => Array(CONFIG.size).fill(null));
+        this.score = 0; this.moves = 0; this.over = false; this.won = false;
+        globalId = 1;
+        document.getElementById('game-over').classList.remove('show');
+        document.getElementById('game-won').classList.remove('show');
+        this.addRandomTile(); this.addRandomTile();
+        view.render(this.grid);
+        // NOTE: Event listener removed from here to prevent stacking
+    },
+
+    restart() {
+        ai.stop();
+        document.getElementById('tile-layer').innerHTML = '';
+        this.init();
+    },
+
+    continueGame() {
+        document.getElementById('game-won').classList.remove('show');
+        this.over = false;
+        // Resume AI immediately
+        ai.start();
+    },
+
+    toggleDemo() {
+        this.demoMode = document.getElementById('demo-mode').checked;
+        this.restart();
+    },
+
+    addRandomTile() {
+        const empty = [];
+        for(let r=0; r<4; r++) for(let c=0; c<4; c++) if(!this.grid[r][c]) empty.push({r,c});
+        if(empty.length > 0) {
+            const {r, c} = empty[Math.floor(Math.random() * empty.length)];
+            let val;
+            
+            if (this.demoMode) {
+                // DEMO MODE: Spawn higher numbers to win faster (2 - 32)
+                const rand = Math.random();
+                if(rand < 0.4) val = 2;
+                else if(rand < 0.7) val = 4;
+                else if(rand < 0.85) val = 8;
+                else if(rand < 0.95) val = 16;
+                else val = 32;
+            } else {
+                // STANDARD MODE
+                val = Math.random() < 0.9 ? 2 : 4;
+            }
+            this.grid[r][c] = new Tile(r, c, val);
+        }
+    },
+
+    move(dir) {
+        if(this.over) return false;
+        const vector = this.getVector(dir);
+        const traversals = this.buildTraversals(vector);
+        let moved = false;
+        this.prepareTiles();
+
+        traversals.r.forEach(r => {
+            traversals.c.forEach(c => {
+                const cell = {r, c};
+                const tile = this.grid[r][c];
+                if (tile) {
+                    const positions = this.findFarthestPosition(cell, vector);
+                    const next = positions.next;
+                    if (this.withinBounds(next) && this.grid[next.r][next.c] && 
+                        this.grid[next.r][next.c].value === tile.value && 
+                        !this.grid[next.r][next.c].mergedFrom) {
+                        
+                        const mergedVal = tile.value * 2;
+                        const merged = new Tile(next.r, next.c, mergedVal);
+                        merged.mergedFrom = [tile, this.grid[next.r][next.c]];
+                        this.grid[next.r][next.c] = merged;
+                        this.grid[r][c] = null;
+                        tile.updatePosition(next.r, next.c);
+                        this.score += mergedVal;
+                        moved = true;
+
+                        // UPDATE BEST SCORE
+                        if (this.score > this.best) {
+                            this.best = this.score;
+                        }
+
+                        // CHECK WIN CONDITION
+                        if (mergedVal === 2048 && !this.won) {
+                            this.won = true;
+                            this.over = true; // Pause input
+                            ai.stop();
+                            setTimeout(() => {
+                                document.getElementById('game-won').classList.add('show');
+                            }, 200); // Small delay for animation
+                        }
+
+                    } else {
+                        this.moveTile(tile, positions.farthest);
+                        if (r !== positions.farthest.r || c !== positions.farthest.c) moved = true;
+                    }
+                }
+            });
+        });
+
+        if (moved) {
+            this.moves++;
+            this.addRandomTile();
+            view.render(this.grid);
+            if (!this.movesAvailable() && !this.won) { // Only show game over if we haven't just won
+                this.over = true;
+                ai.stop();
+                setTimeout(() => document.getElementById('game-over').classList.add('show'), 500);
+            }
+        }
+        return moved;
+    },
+
+    // Helpers
+    prepareTiles() { for(let r=0;r<4;r++) for(let c=0;c<4;c++) if(this.grid[r][c]) { this.grid[r][c].mergedFrom = null; this.grid[r][c].savePosition(); } },
+    moveTile(tile, cell) { this.grid[tile.r][tile.c] = null; this.grid[cell.r][cell.c] = tile; tile.updatePosition(cell.r, cell.c); },
+    getVector(dir) { const map = { 0: {r:0,c:-1}, 1: {r:-1,c:0}, 2: {r:0,c:1}, 3: {r:1,c:0} }; return map[dir]; },
+    buildTraversals(vec) { const t = { r: [0,1,2,3], c: [0,1,2,3] }; if (vec.r === 1) t.r.reverse(); if (vec.c === 1) t.c.reverse(); return t; },
+    findFarthestPosition(cell, vec) { let prev; do { prev = cell; cell = { r: prev.r + vec.r, c: prev.c + vec.c }; } while (this.withinBounds(cell) && !this.grid[cell.r][cell.c]); return { farthest: prev, next: cell }; },
+    withinBounds(p) { return p.r>=0 && p.r<4 && p.c>=0 && p.c<4; },
+    movesAvailable() {
+        if(this.grid.flat().some(x=>!x)) return true;
+        for(let r=0;r<4;r++) for(let c=0;c<4;c++) {
+            const t = this.grid[r][c];
+            if(c<3 && t.value === this.grid[r][c+1].value) return true;
+            if(r<3 && t.value === this.grid[r+1][c].value) return true;
+        }
+        return false;
+    },
+    handleInput(e) {
+        if(ai.active) return;
+        const map = {ArrowLeft:0, ArrowUp:1, ArrowRight:2, ArrowDown:3};
+        if(map[e.key]!==undefined) { e.preventDefault(); this.move(map[e.key]); }
+    }
+};
+
+const view = {
+    tileContainer: document.getElementById('tile-layer'),
+    render(grid) {
+        document.getElementById('score-display').textContent = game.score;
+        document.getElementById('best-display').textContent = game.best;
+        document.getElementById('move-display').textContent = `Moves: ${game.moves}`;
+        
+        const existingNodes = Array.from(this.tileContainer.children);
+        const touchedIds = new Set();
+        for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+            const tile = grid[r][c];
+            if(tile) {
+                this.drawTile(tile); touchedIds.add(tile.id);
+                if(tile.mergedFrom) {
+                    tile.mergedFrom.forEach(merged => {
+                        this.drawTile(merged); touchedIds.add(merged.id);
+                        const node = document.getElementById(`tile-${merged.id}`);
+                        if(node) { node.classList.add('merged-remove'); setTimeout(() => node.remove(), CONFIG.aiDelay); }
+                    });
+                    const newNode = document.getElementById(`tile-${tile.id}`);
+                    if(newNode) newNode.classList.add('merged');
+                }
+            }
+        }
+        existingNodes.forEach(node => { if(!touchedIds.has(parseInt(node.id.split('-')[1]))) node.remove(); });
+    },
+    drawTile(tile) {
+        let node = document.getElementById(`tile-${tile.id}`);
+        const x = tile.c * (100 + 15); const y = tile.r * (100 + 15);
+        const transform = `translate(${x}px, ${y}px)`;
+        const classes = `tile`;
+        const innerClasses = `tile-inner val-${tile.value > 2048 ? 'super' : tile.value}`;
+        if (!node) {
+            node = document.createElement('div'); node.id = `tile-${tile.id}`; node.className = classes; node.style.transform = transform;
+            const inner = document.createElement('div'); inner.className = innerClasses; inner.textContent = tile.value;
+            node.appendChild(inner); this.tileContainer.appendChild(node);
+        } else {
+            node.style.transform = transform;
+            const inner = node.firstChild;
+            if (inner.textContent != tile.value) { inner.textContent = tile.value; inner.className = innerClasses; }
+        }
+    }
+};
+
+const ai = {
+    active: false, timer: null,
+    toggle() { this.active ? this.stop() : this.start(); },
+    start() {
+        if(game.over && !game.won) return; // Don't start if actually dead
+        if(game.over && game.won) game.continueGame(); // If won screen is up, resume
+        
+        this.active = true;
+        document.getElementById('ai-trigger').classList.add('active');
+        document.getElementById('ai-text').textContent = "Running...";
+        this.loop();
+    },
+    stop() {
+        this.active = false; clearTimeout(this.timer);
+        document.getElementById('ai-trigger').classList.remove('active');
+        document.getElementById('ai-text').textContent = "Auto-Solve";
+    },
+    loop() {
+        if(!this.active || (game.over && !game.won)) return; // Stop if game over (and not just paused for win)
+        
+        const simpleGrid = game.grid.map(row => row.map(t => t ? t.value : 0));
+        const emptyCount = simpleGrid.flat().filter(x => x === 0).length;
+        const currentDepth = emptyCount <= 4 ? CONFIG.survivalDepth : CONFIG.aiDepth;
+        
+        let bestMove = this.getBestMove(simpleGrid, currentDepth);
+        if (bestMove === -1 && game.movesAvailable()) { // Panic mode
+             for(let d=0; d<4; d++) { const res = this.simMove(simpleGrid, d); if(res.moved) { bestMove = d; break; } }
+        }
+
+        if(bestMove !== -1) {
+            game.move(bestMove);
+            if(game.won && game.over) { 
+                // We just hit the 2048 win pause, stop loop here
+                return; 
+            }
+            this.timer = setTimeout(() => this.loop(), CONFIG.aiDelay);
+        } else { this.stop(); }
+    },
+
+    getBestMove(grid, depth) {
+        let bestScore = -Infinity; let bestDir = -1;
+        for(let d=0; d<4; d++) {
+            const res = this.simMove(grid, d);
+            if(res.moved) {
+                const score = this.expectimax(res.grid, depth, false);
+                if(score > bestScore) { bestScore = score; bestDir = d; }
+            }
+        }
+        return bestDir;
+    },
+
+    expectimax(grid, depth, isPlayer) {
+        if(depth === 0) return this.evaluate(grid);
+        if(isPlayer) {
+            let max = -Infinity;
+            for(let d=0; d<4; d++) {
+                const res = this.simMove(grid, d);
+                if(res.moved) { const s = this.expectimax(res.grid, depth-1, false); if(s > max) max = s; }
+            }
+            return max === -Infinity ? -1e9 : max; 
+        } else {
+            const empty = []; for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(grid[r][c]===0)empty.push({r,c});
+            if(empty.length === 0) return this.evaluate(grid);
+            
+            let candidates = empty; const limit = depth > 4 ? 1 : 2;
+            if(empty.length > limit) {
+                candidates = []; while(candidates.length < limit) { const p = empty[Math.floor(Math.random()*empty.length)]; if(!candidates.includes(p)) candidates.push(p); }
+            }
+            
+            let avg = 0;
+            for(let p of candidates) {
+                const g2 = grid.map(r=>[...r]); g2[p.r][p.c] = 2;
+                const g4 = grid.map(r=>[...r]); g4[p.r][p.c] = 4;
+                avg += 0.9 * this.expectimax(g2, depth-1, true) + 0.1 * this.expectimax(g4, depth-1, true);
+            }
+            return avg / candidates.length;
+        }
+    },
+
+    evaluate(g) {
+        const weights = [[2, 4, 8, 16], [256, 128, 64, 32], [512, 1024, 2048, 4096], [65536, 32768, 16384, 8192]];
+        let score = 0; let empty = 0;
+        for(let r=0;r<4;r++) for(let c=0;c<4;c++) { score += g[r][c] * weights[r][c]; if(g[r][c]===0) empty++; }
+        
+        let mono = 0;
+        for (let r=0; r<4; r++) {
+            let inc = 0, dec = 0; for (let c=0; c<3; c++) { if (g[r][c] <= g[r][c+1]) inc++; if (g[r][c] >= g[r][c+1]) dec++; }
+            mono += Math.max(inc, dec) * 1000;
+        }
+        for (let c=0; c<4; c++) {
+            let inc = 0, dec = 0; for (let r=0; r<3; r++) { if (g[r][c] <= g[r+1][c]) inc++; if (g[r][c] >= g[r+1][c]) dec++; }
+            mono += Math.max(inc, dec) * 1000;
+        }
+        return score + mono + (empty * 10000);
+    },
+
+    simMove(grid, dir) {
+        let ng = grid.map(r=>[...r]); let moved = false;
+        const rotate = (g, n) => { let r=g; for(let i=0;i<n;i++) r=r[0].map((_,i)=>r.map(row=>row[i]).reverse()); return r; };
+        if(dir===1) ng=rotate(ng,3); if(dir===2) ng=rotate(ng,2); if(dir===3) ng=rotate(ng,1);
+        for(let r=0;r<4;r++) {
+            let row = ng[r].filter(x=>x);
+            for(let i=0;i<row.length-1;i++) { if(row[i]===row[i+1]) { row[i]*=2; row[i+1]=0; moved=true; } }
+            row = row.filter(x=>x); while(row.length<4) row.push(0);
+            if(row.join(',')!==ng[r].join(',')) moved=true;
+            ng[r]=row;
+        }
+        if(dir===1) ng=rotate(ng,1); if(dir===2) ng=rotate(ng,2); if(dir===3) ng=rotate(ng,3);
+        return { grid: ng, moved };
+    }
+};
+
+game.init();
+
+// Single event listener attachment to prevent stacking on restart
+document.addEventListener('keydown', (e) => game.handleInput(e));
+</script>
+</body>
+</html>
